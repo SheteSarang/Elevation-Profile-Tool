@@ -12,18 +12,18 @@ const CallingFn: React.FC = () => {
   const threeRef = useRef<ThreeBase | null>(null);
 
   useEffect(() => {
-    // Setup Three.js scene
+    // Initialize Three.js scene
     const three = new ThreeBase();
     threeRef.current = three;
 
-    // Load model
+    // Load 3D model
     ModelLoader.loadModel(
       three.scene,
       "/model/strairs_free.mtl",
       "/model/strairs_free.obj"
     );
 
-    // LineDrawer setup
+    // Initialize LineDrawer
     const lineDrawer = new LineDrawer(
       three.scene,
       three.camera,
@@ -31,7 +31,7 @@ const CallingFn: React.FC = () => {
     );
     lineDrawerRef.current = lineDrawer;
 
-    // ElevationProfile setup
+    // Initialize ElevationProfile
     const elevationProfile = new ElevationProfile(
       three.scene,
       three.camera,
@@ -42,23 +42,25 @@ const CallingFn: React.FC = () => {
     // Start render loop
     three.start();
 
-    // Custom toggle event
+    // Handle toggle event to draw lines and elevation curve
     const toggleHandler = () => {
       const drawer = lineDrawerRef.current;
+      const elevation = elevationProfileRef.current;
 
-      if (drawer) {
+      if (drawer && elevation) {
         drawer.toggle();
-          const points = drawer.getPoints();
-          if (points.length > 0) {
-            elevationProfileRef.current?.generateFromPoints(points);
-           
-          }
-        
+
+        const points2D = drawer.getPoints(); // Expecting [{x, y}]
+        if (points2D.length > 0) {
+          // Call ElevationProfile logic here
+          elevation.generateFromPoints(points2D); // Will raycast & draw curve
+        }
       }
     };
 
     window.addEventListener("line-drawing-toggle", toggleHandler);
 
+    // Cleanup on unmount
     return () => {
       window.removeEventListener("line-drawing-toggle", toggleHandler);
       lineDrawerRef.current?.disable();

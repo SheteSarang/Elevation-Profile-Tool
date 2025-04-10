@@ -204,13 +204,11 @@ export class ElevationProfile {
     }
 
     for (const screenPoint of points) {
-      // Convert screen (pixel) to normalized device coordinates (-1 to +1)
       const mouse = new THREE.Vector2(
         (screenPoint.x / this.renderer.domElement.clientWidth) * 2 - 1,
         -(screenPoint.y / this.renderer.domElement.clientHeight) * 2 + 1
       );
 
-      // Set ray from camera using mouse position
       this.raycaster.setFromCamera(mouse, this.camera);
       const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
@@ -222,45 +220,75 @@ export class ElevationProfile {
     }
   }
 
-  // Still keeping your original function for direct XYZ coordinates
+  // Raycasting on 2D world XY points to find terrain Z
   generateFromPoints(points: { x: number; y: number }[]) {
     if (!points || points.length === 0) {
       console.warn("⚠️ No points provided.");
       return;
     }
-  
-    const down = new THREE.Vector3(0, 0, -1); // Negative Z
-    const up = new THREE.Vector3(0, 0, 1); // Positive Z
-  
+
+    const down = new THREE.Vector3(0, 0, -1);
+    const up = new THREE.Vector3(0, 0, 1);
+
     const intersectionResults: THREE.Vector3[] = [];
-  
+
     points.forEach((point, index) => {
-      const origin = new THREE.Vector3(point.x, point.y, 0); // Assuming z = 0
-  
-      // Try downward direction
+      const origin = new THREE.Vector3(point.x, point.y, 0);
+
       this.raycaster.set(origin, down);
       let intersects = this.raycaster.intersectObjects(this.scene.children, true);
-  
+
       if (intersects.length > 0) {
         console.log(`🔽 [${index}] Downward intersection at:`, intersects[0].point);
         intersectionResults.push(intersects[0].point);
         return;
       }
-  
-      // Try upward direction
+
       this.raycaster.set(origin, up);
       intersects = this.raycaster.intersectObjects(this.scene.children, true);
-  
+
       if (intersects.length > 0) {
         console.log(`🔼 [${index}] Upward intersection at:`, intersects[0].point);
         intersectionResults.push(intersects[0].point);
       } else {
         console.warn(`❌ [${index}] No intersection found in Z direction.`);
-        // Optional: Push null or placeholder if needed
       }
     });
-  
-    // Optional: Do something with intersectionResults array
+
+    if (intersectionResults.length > 1) {
+      this.draw3DCurve(intersectionResults);
+    }
+
     console.log("✅ All intersections:", intersectionResults);
+  }
+
+  // 🔧 Bold 3D curved path from points
+  private draw3DCurve(points: THREE.Vector3[]) {
+    if (points.length < 2) {
+      console.warn("⚠️ Not enough points to draw a curve.");
+      return;
+    }
+
+    const curve = new THREE.CatmullRomCurve3(points);
+    curve.curveType = 'centripetal';
+    curve.closed = false;
+
+    const tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.1, 8, false);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xff007f,
+      transparent: true,
+      opacity: 0.9
+    });
+
+    const mesh = new THREE.Mesh(tubeGeometry, material);
+    mesh.name = 'elevationCurve';
+
+    // Remove previous curve if it exists
+    const old = this.scene.getObjectByName('elevationCurve');
+    if (old) {
+      this.scene.remove(old);
+    }
+
+    this.scene.add(mesh);
   }
 }
