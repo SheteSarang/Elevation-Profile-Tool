@@ -100,7 +100,7 @@ export class LineDrawer {
 
       if (this.points.length < 2) {
         this.points.push(point.clone());
-        console.log(`✅ Point ${this.points.length}:`, point);
+        console.log(` Point ${this.points.length}:`, point);
       }
 
       if (this.points.length === 2) {
@@ -108,7 +108,7 @@ export class LineDrawer {
         const distance = p1.distanceTo(p2);
 
         if (distance < 0.1) {
-          console.warn("⚠️ Distance too short.");
+          console.warn("⚠ Distance too short.");
           this.points = [];
           return;
         }
@@ -123,7 +123,7 @@ export class LineDrawer {
         const deltaY = p2.y - p1.y;
 
         if (deltaX === 0) {
-          console.warn("⚠️ Vertical line detected.");
+          console.warn(" Vertical line detected.");
           this.points = [];
           return;
         }
@@ -146,7 +146,7 @@ export class LineDrawer {
         // Include second point
         this.allPoints.push({ x: parseFloat(p2.x.toFixed(2)), y: parseFloat(p2.y.toFixed(2)) });
 
-        console.log("📌 Full point array (including initial):", this.allPoints);
+        console.log(" Full point array (including initial):", this.allPoints);
         this.points = [];
       }
     }
@@ -157,7 +157,7 @@ export class LineDrawer {
       window.addEventListener("click", this.handleClickBound);
       this.enabled = true;
       this.points = [];
-      console.log("🟢 Line drawing enabled");
+      console.log(" Line drawing enabled");
     }
   }
 
@@ -166,7 +166,7 @@ export class LineDrawer {
       window.removeEventListener("click", this.handleClickBound);
       this.enabled = false;
       this.points = [];
-      console.log("🔴 Line drawing disabled");
+      console.log(" Line drawing disabled");
     }
   }
 
@@ -242,7 +242,7 @@ export class ElevationProfile {
       let intersects = this.raycaster.intersectObjects(this.scene.children, true);
   
       if (intersects.length > 0) {
-        console.log(`🔽 [${index}] Downward intersection at:`, intersects[0].point);
+        console.log(` [${index}] Downward intersection at:`, intersects[0].point);
         intersectionResults.push(intersects[0].point);
         return;
       }
@@ -252,15 +252,15 @@ export class ElevationProfile {
       intersects = this.raycaster.intersectObjects(this.scene.children, true);
   
       if (intersects.length > 0) {
-        console.log(`🔼 [${index}] Upward intersection at:`, intersects[0].point);
+        console.log(` [${index}] Upward intersection at:`, intersects[0].point);
         intersectionResults.push(intersects[0].point);
       } else {
-        console.warn(`❌ [${index}] No intersection found in Z direction.`);
+        console.warn(` [${index}] No intersection found in Z direction.`);
         // Optional: Push null or placeholder if needed
       }
     });
   
     // Optional: Do something with intersectionResults array
-    console.log("✅ All intersections:", intersectionResults);
+    console.log("All intersections:", intersectionResults);
   }
 }
