@@ -1,6 +1,5 @@
-
-
 import * as THREE from "three";
+import Plotly from "plotly.js-dist";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -257,6 +256,7 @@ export class ElevationProfile {
 
     if (intersectionResults.length > 1) {
       this.draw3DCurve(intersectionResults);
+      this.plotElevationProfile(intersectionResults); // Call the new method to plot the graph
     }
 
     console.log("✅ All intersections:", intersectionResults);
@@ -290,5 +290,34 @@ export class ElevationProfile {
     }
 
     this.scene.add(mesh);
+  }
+
+  // 📊 Plot elevation profile using Plotly
+  private plotElevationProfile(intersectionResults: THREE.Vector3[]) {
+    const x_coords = intersectionResults.map(point => point.x);
+    const z_coords = intersectionResults.map(point => point.z);
+
+    const data = [
+      {
+        x: x_coords,
+        y: z_coords,
+        mode: 'lines+markers',
+        name: 'Elevation Profile',
+        type: 'scatter'
+      }
+    ];
+
+    const layout = {
+      title: 'Elevation Profile',
+      xaxis: { title: 'Distance (units)' },
+      yaxis: { title: 'Elevation (units)' }
+    };
+
+    // Render the graph in a new div
+    const graphDiv = document.createElement('div');
+    graphDiv.id = 'elevation-profile-graph';
+    document.body.appendChild(graphDiv);
+
+    Plotly.newPlot(graphDiv, data, layout);
   }
 }
