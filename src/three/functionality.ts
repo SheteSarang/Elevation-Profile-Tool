@@ -73,6 +73,7 @@ export class LineDrawer {
   private enabled: boolean = false;
   private points: THREE.Vector3[] = [];
   private allPoints: { x: number; y: number }[] = [];
+  private elevationProfile: ElevationProfile; // Add ElevationProfile instance
   private handleClickBound: (event: MouseEvent) => void;
 
   constructor(scene: THREE.Scene, camera: THREE.Camera, renderer: THREE.WebGLRenderer) {
@@ -81,6 +82,7 @@ export class LineDrawer {
     this.renderer = renderer;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+    this.elevationProfile = new ElevationProfile(scene, camera, renderer); // Initialize ElevationProfile
     this.handleClickBound = this.handleClick.bind(this);
   }
 
@@ -112,7 +114,7 @@ export class LineDrawer {
           return;
         }
 
-        // Draw line
+        // Draw white line
         const geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
         const material = new THREE.LineBasicMaterial({ color: 0xffffff });
         const line = new THREE.Line(geometry, material);
@@ -146,6 +148,12 @@ export class LineDrawer {
         this.allPoints.push({ x: parseFloat(p2.x.toFixed(2)), y: parseFloat(p2.y.toFixed(2)) });
 
         console.log("📌 Full point array (including initial):", this.allPoints);
+
+        // Delay before drawing the elevation profile
+        setTimeout(() => {
+          this.elevationProfile.generateFromPoints(this.allPoints);
+        }, 500); // 500ms delay
+
         this.points = [];
       }
     }
@@ -155,7 +163,6 @@ export class LineDrawer {
     if (!this.enabled) {
       window.addEventListener("click", this.handleClickBound);
       this.enabled = true;
-      this.points = [];
       console.log("🟢 Line drawing enabled");
     }
   }
@@ -164,7 +171,6 @@ export class LineDrawer {
     if (this.enabled) {
       window.removeEventListener("click", this.handleClickBound);
       this.enabled = false;
-      this.points = [];
       console.log("🔴 Line drawing disabled");
     }
   }

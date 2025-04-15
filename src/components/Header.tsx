@@ -1,9 +1,12 @@
 // Header.tsx
-import React, { useState } from "react";
+import React from "react";
 
-const Header: React.FC = () => {
-  const [drawingEnabled, setDrawingEnabled] = useState(false);
+interface HeaderProps {
+  drawingEnabled: boolean;
+  setDrawingEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
+const Header: React.FC<HeaderProps> = ({ drawingEnabled, setDrawingEnabled }) => {
   const toggleDrawing = () => {
     const newState = !drawingEnabled;
     setDrawingEnabled(newState);

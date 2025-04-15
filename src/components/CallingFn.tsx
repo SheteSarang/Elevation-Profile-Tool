@@ -1,14 +1,12 @@
-import { useEffect, useRef } from "react";
-import {
-  ThreeBase,
-  ModelLoader,
-  LineDrawer,
-  ElevationProfile,
-} from "../three/functionality";
+import React, { useEffect, useRef } from "react";
+import { ThreeBase, ModelLoader, LineDrawer } from "../three/functionality";
 
-const CallingFn: React.FC = () => {
+interface CallingFnProps {
+  drawingEnabled: boolean;
+}
+
+const CallingFn: React.FC<CallingFnProps> = ({ drawingEnabled }) => {
   const lineDrawerRef = useRef<LineDrawer | null>(null);
-  const elevationProfileRef = useRef<ElevationProfile | null>(null);
   const threeRef = useRef<ThreeBase | null>(null);
 
   useEffect(() => {
@@ -24,49 +22,30 @@ const CallingFn: React.FC = () => {
     );
 
     // Initialize LineDrawer
-    const lineDrawer = new LineDrawer(
-      three.scene,
-      three.camera,
-      three.renderer
-    );
+    const lineDrawer = new LineDrawer(three.scene, three.camera, three.renderer);
     lineDrawerRef.current = lineDrawer;
-
-    // Initialize ElevationProfile
-    const elevationProfile = new ElevationProfile(
-      three.scene,
-      three.camera,
-      three.renderer
-    );
-    elevationProfileRef.current = elevationProfile;
 
     // Start render loop
     three.start();
 
-    // Handle toggle event to draw lines and elevation curve
-    const toggleHandler = () => {
-      const drawer = lineDrawerRef.current;
-      const elevation = elevationProfileRef.current;
-
-      if (drawer && elevation) {
-        drawer.toggle();
-
-        const points2D = drawer.getPoints(); // Expecting [{x, y}]
-        if (points2D.length > 0) {
-          // Call ElevationProfile logic here
-          elevation.generateFromPoints(points2D); // Will raycast & draw curve
-        }
-      }
-    };
-
-    window.addEventListener("line-drawing-toggle", toggleHandler);
-
     // Cleanup on unmount
     return () => {
-      window.removeEventListener("line-drawing-toggle", toggleHandler);
       lineDrawerRef.current?.disable();
       three.cleanup();
     };
   }, []);
+
+  useEffect(() => {
+    const drawer = lineDrawerRef.current;
+
+    if (drawer) {
+      if (drawingEnabled) {
+        drawer.enable();
+      } else {
+        drawer.disable();
+      }
+    }
+  }, [drawingEnabled]); // Run whenever drawingEnabled changes
 
   return null;
 };
