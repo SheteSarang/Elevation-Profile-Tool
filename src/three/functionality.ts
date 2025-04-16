@@ -9,7 +9,7 @@ export class ThreeBase {
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
-
+ 
   constructor() {
     this.scene = new THREE.Scene();
 
@@ -30,6 +30,7 @@ export class ThreeBase {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
+    
 
     const axesHelper = new THREE.AxesHelper(2);
     this.scene.add(axesHelper);
@@ -75,8 +76,10 @@ export class LineDrawer {
   private allPoints: { x: number; y: number }[] = [];
   private elevationProfile: ElevationProfile; // Add ElevationProfile instance
   private handleClickBound: (event: MouseEvent) => void;
+  static iselevationProfiledone: boolean = false; // Flag to check if elevation profile is done
 
   constructor(scene: THREE.Scene, camera: THREE.Camera, renderer: THREE.WebGLRenderer) {
+    
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
@@ -325,5 +328,7 @@ export class ElevationProfile {
     document.body.appendChild(graphDiv);
 
     Plotly.newPlot(graphDiv, data, layout);
+    LineDrawer.iselevationProfiledone = true; // Set the flag to true after plotting
+    console.log("iselevationprofiledone:",LineDrawer.iselevationProfiledone);
   }
 }

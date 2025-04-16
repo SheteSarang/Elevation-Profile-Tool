@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 import { ThreeBase, ModelLoader, LineDrawer } from "../three/functionality";
 
-interface CallingFnProps {
-  drawingEnabled: boolean;
-}
-
-const CallingFn: React.FC<CallingFnProps> = ({ drawingEnabled }) => {
+const CallingFn: React.FC = () => {
   const lineDrawerRef = useRef<LineDrawer | null>(null);
   const threeRef = useRef<ThreeBase | null>(null);
 
+  // Get the state directly from Redux
+  const drawingEnabled = useSelector((state: RootState) => state.drawing.drawingEnabled);
+  console.log( drawingEnabled);
   useEffect(() => {
     // Initialize Three.js scene
     const three = new ThreeBase();
@@ -45,7 +46,7 @@ const CallingFn: React.FC<CallingFnProps> = ({ drawingEnabled }) => {
         drawer.disable();
       }
     }
-  }, [drawingEnabled]); // Run whenever drawingEnabled changes
+  }, [drawingEnabled]); // React to changes in drawingEnabled
 
   return null;
 };
