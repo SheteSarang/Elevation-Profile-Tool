@@ -5,6 +5,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import store from "../store/store";
 import { setIselevationProfiledone } from "../store/angleSlice";
+
 export class ThreeBase {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
