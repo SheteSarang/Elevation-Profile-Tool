@@ -5,7 +5,6 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import store from "../store/store";
 import { setIselevationProfiledone } from "../store/angleSlice";
-
 export class ThreeBase {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -87,7 +86,9 @@ export class LineDrawer {
     this.renderer = renderer;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
-    this.elevationProfile = new ElevationProfile(scene, camera, renderer); // Initialize ElevationProfile
+    this.elevationProfile = new ElevationProfile(scene, camera, renderer, (coordinates) => {
+      console.log("Final coordinates:", coordinates);
+    }); // Initialize ElevationProfile
     this.handleClickBound = this.handleClick.bind(this);
   }
 
@@ -198,12 +199,20 @@ export class ElevationProfile {
   private camera: THREE.Camera;
   private renderer: THREE.WebGLRenderer;
   private raycaster: THREE.Raycaster;
+  private labeledPoints: { label: string; x: string; z: string }[] = [];
+  private setFinalCoordinates: (coordinates: { label: string; x: string; z: string }[]) => void;
 
-  constructor(scene: THREE.Scene, camera: THREE.Camera, renderer: THREE.WebGLRenderer) {
+  constructor(
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    renderer: THREE.WebGLRenderer,
+    setFinalCoordinates: (coordinates: { label: string; x: string; z: string }[]) => void
+  ) {
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
     this.raycaster = new THREE.Raycaster();
+    this.setFinalCoordinates = setFinalCoordinates; // Store the callback
   }
 
   // Use 2D screen points (like mouse clicks)
@@ -304,35 +313,78 @@ export class ElevationProfile {
   }
 
   // 📊 Plot elevation profile using Plotly
-  private plotElevationProfile(intersectionResults: THREE.Vector3[]) {
-    const x_coords = intersectionResults.map(point => point.x);
-    const z_coords = intersectionResults.map(point => point.z);
+  public plotElevationProfile(intersectionResults: THREE.Vector3[]) {
+    const x_coords = intersectionResults.map((point) => point.x);
+    const z_coords = intersectionResults.map((point) => point.z);
+
+    // Create a labeled object for all points
+    this.labeledPoints = intersectionResults.map((point, index) => ({
+      label: `Point${index + 1}`,
+      x: point.x.toFixed(2),
+      z: point.z.toFixed(2),
+    }));
+
+    console.log("Labeled Points:", this.labeledPoints); // Log the labeled points
+
+    // Update the finalCoordinates state in CallingFn.tsx
+    this.setFinalCoordinates(this.labeledPoints);
 
     const data = [
       {
         x: x_coords,
         y: z_coords,
-        mode: 'lines+markers',
-        name: 'Elevation Profile',
-        type: 'scatter'
-      }
+        mode: "lines+markers",
+        name: "Elevation Profile",
+        type: "scatter",
+        text: this.labeledPoints.map((point) => `${point.label} (${point.x}, ${point.z})`), // Add labels to hover text
+        hovertemplate: "%{text}<extra></extra>", // Custom hover template
+      },
     ];
 
     const layout = {
-      title: 'Elevation Profile',
-      xaxis: { title: 'Distance (units)' },
-      yaxis: { title: 'Elevation (units)' }
+      title: "Elevation Profile",
+      xaxis: { title: "Distance (units)" },
+      yaxis: { title: "Elevation (units)" },
     };
 
     // Render the graph in a new div
-    const graphDiv = document.createElement('div');
-    graphDiv.id = 'elevation-profile-graph';
+    const graphDiv = document.createElement("div");
+    graphDiv.id = "elevation-profile-graph";
     document.body.appendChild(graphDiv);
 
     Plotly.newPlot(graphDiv, data, layout);
-    LineDrawer.iselevationProfiledone = true; // Set the flag to true after plotting
-    console.log("iselevationprofiledone:",LineDrawer.iselevationProfiledone);
-    store.dispatch(setIselevationProfiledone(true)); // Update Redux state
 
+    LineDrawer.iselevationProfiledone = true; // Set the flag to true after plotting
+    console.log("iselevationprofiledone:", LineDrawer.iselevationProfiledone);
+
+    store.dispatch(setIselevationProfiledone(true)); // Update Redux state
+  }
+
+  getLabeledPoints() {
+    console.log("Labeled Points from getLabeledPoints:", this.labeledPoints);
+    return this.labeledPoints;
+  }
+}
+
+export class PointHandler {
+
+
+  inPointHandle(point1: number | null, point2: number | null, point3: number | null) {
+    console.log("Point1:", point1);
+    console.log("Point2:", point2);
+    console.log("Point3:", point3);
+   
+  
+ 
+    const elevationProfile = new ElevationProfile(
+      new THREE.Scene(),
+      new THREE.PerspectiveCamera(),
+      new THREE.WebGLRenderer(),
+      (coordinates) => {
+        console.log("Final coordinates:", coordinates);
+      }
+    );
+  console.log(elevationProfile.getLabeledPoints());
+  
   }
 }

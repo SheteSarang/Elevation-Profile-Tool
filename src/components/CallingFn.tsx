@@ -7,6 +7,8 @@ const CallingFn: React.FC = () => {
   const lineDrawerRef = useRef<LineDrawer | null>(null);
   const threeRef = useRef<ThreeBase | null>(null);
 
+
+  
   // Get the state directly from Redux
   const drawingEnabled = useSelector((state: RootState) => state.drawing.drawingEnabled);
   console.log( drawingEnabled);
@@ -28,7 +30,7 @@ const CallingFn: React.FC = () => {
 
     // Start render loop
     three.start();
-
+    
     // Cleanup on unmount
     return () => {
       lineDrawerRef.current?.disable();
