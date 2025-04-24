@@ -1,54 +1,78 @@
 import React, { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { ThreeBase, ModelLoader, LineDrawer } from "../three/functionality";
+import {
+  ThreeBase,
+  ModelLoader,
+  LineDrawer,
+  AngleCalculate,
+} from "../three/functionality";
 
 const CallingFn: React.FC = () => {
   const lineDrawerRef = useRef<LineDrawer | null>(null);
   const threeRef = useRef<ThreeBase | null>(null);
+  const angleCalcRef = useRef<AngleCalculate | null>(null);
 
+  const drawingEnabled = useSelector(
+    (state: RootState) => state.drawing.drawingEnabled
+  );
 
-  
-  // Get the state directly from Redux
-  const drawingEnabled = useSelector((state: RootState) => state.drawing.drawingEnabled);
-  console.log( drawingEnabled);
+  // initialize Three.js + LineDrawer once
   useEffect(() => {
-    // Initialize Three.js scene
     const three = new ThreeBase();
     threeRef.current = three;
 
-    // Load 3D model
     ModelLoader.loadModel(
       three.scene,
       "/model/strairs_free.mtl",
       "/model/strairs_free.obj"
     );
 
-    // Initialize LineDrawer
-    const lineDrawer = new LineDrawer(three.scene, three.camera, three.renderer);
-    lineDrawerRef.current = lineDrawer;
+    lineDrawerRef.current = new LineDrawer(
+      three.scene,
+      three.camera,
+      three.renderer
+    );
 
-    // Start render loop
     three.start();
-    
-    // Cleanup on unmount
+
     return () => {
       lineDrawerRef.current?.disable();
+      angleCalcRef.current?.disable();
       three.cleanup();
     };
   }, []);
 
+  // toggle line-drawing
   useEffect(() => {
-    const drawer = lineDrawerRef.current;
+    if (drawingEnabled) lineDrawerRef.current?.enable();
+    else lineDrawerRef.current?.disable();
+  }, [drawingEnabled]);
 
-    if (drawer) {
-      if (drawingEnabled) {
-        drawer.enable();
-      } else {
-        drawer.disable();
+  // listen for angle-mode toggle events
+  useEffect(() => {
+    const handleAngleToggle = (e: Event) => {
+      const on = (e as CustomEvent).detail as boolean;
+      const three = threeRef.current;
+      if (!three) return;
+
+      // lazily create AngleCalculate once
+      if (!angleCalcRef.current) {
+        angleCalcRef.current = new AngleCalculate(
+          three.scene,
+          three.camera,
+          three.renderer
+        );
       }
-    }
-  }, [drawingEnabled]); // React to changes in drawingEnabled
+
+      if (on) angleCalcRef.current.enable();
+      else angleCalcRef.current.disable();
+    };
+
+    window.addEventListener("angle-calculate-toggle", handleAngleToggle);
+    return () =>
+      window.removeEventListener("angle-calculate-toggle", handleAngleToggle);
+  }, []);
 
   return null;
 };

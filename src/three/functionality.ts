@@ -3,8 +3,8 @@ import Plotly from "plotly.js-dist";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import store from "../store/store";
-import { setIselevationProfiledone } from "../store/angleSlice";
+// import store from "../store/store";
+// import { setIselevationProfiledone } from "../store/angleSlice";
 export class ThreeBase {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -35,6 +35,7 @@ export class ThreeBase {
 
     const axesHelper = new THREE.AxesHelper(2);
     this.scene.add(axesHelper);
+    
   }
 
   animate = () => {
@@ -50,6 +51,7 @@ export class ThreeBase {
   cleanup = () => {
     document.body.removeChild(this.renderer.domElement);
   };
+  
 }
 
 export class ModelLoader {
@@ -357,7 +359,6 @@ export class ElevationProfile {
     LineDrawer.iselevationProfiledone = true; // Set the flag to true after plotting
     console.log("iselevationprofiledone:", LineDrawer.iselevationProfiledone);
 
-    store.dispatch(setIselevationProfiledone(true)); // Update Redux state
   }
 
   getLabeledPoints() {
@@ -366,25 +367,145 @@ export class ElevationProfile {
   }
 }
 
-export class PointHandler {
 
 
-  inPointHandle(point1: number | null, point2: number | null, point3: number | null) {
-    console.log("Point1:", point1);
-    console.log("Point2:", point2);
-    console.log("Point3:", point3);
-   
-  
- 
-    const elevationProfile = new ElevationProfile(
-      new THREE.Scene(),
-      new THREE.PerspectiveCamera(),
-      new THREE.WebGLRenderer(),
-      (coordinates) => {
-        console.log("Final coordinates:", coordinates);
-      }
-    );
-  console.log(elevationProfile.getLabeledPoints());
-  
+export class AngleCalculate {
+  private scene: THREE.Scene;
+  private camera: THREE.Camera;
+  private renderer: THREE.WebGLRenderer;
+  private raycaster: THREE.Raycaster;
+  private mouse: THREE.Vector2;
+  private points: THREE.Vector3[];
+  private handleClickBound: (event: MouseEvent) => void;
+
+  constructor(
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    renderer: THREE.WebGLRenderer
+  ) {
+    this.scene = scene;
+    this.camera = camera;
+    this.renderer = renderer;
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    
+    this.points = [];
+
+    this.handleClickBound = this.handleClick.bind(this);
   }
-}
+
+  enable() {
+    window.addEventListener("click", this.handleClickBound);
+    console.log("🟢 Click to select points");
+  }
+
+  disable() {
+    window.removeEventListener("click", this.handleClickBound);
+    console.log("🔴 Click listener removed");
+  }
+
+  private handleClick(event: MouseEvent) {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+    if (intersects.length > 0) {
+      const point = intersects[0].point.clone();
+      this.points.push(point);
+      console.log(`📍 Point ${this.points.length}:`, point);
+
+      if (this.points.length === 2) {
+        this.drawLine(this.points[0], this.points[1]);
+        this.points = []; // Reset after 2 points
+      }
+    }
+  }
+
+  private drawLine(p1: THREE.Vector3, p2: THREE.Vector3) {
+    const geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+    const material = new THREE.LineBasicMaterial({
+      color: 0xff0000,
+      depthTest: false,      // <- Makes sure it’s not occluded by other objects
+      transparent: true,     // <- Optional, useful if you also want to control opacity
+      opacity: 1.0
+    });
+  
+    const line = new THREE.Line(geometry, material);
+    line.renderOrder = 999; // <- Forces this line to render last, above other objects
+  
+    this.scene.add(line);
+    console.log("🧵 Line drawn between two points and set to always be visible");
+  }}
+  
+
+
+// export class AngleCalculate {
+//   private scene: THREE.Scene;
+//   private camera: THREE.Camera;
+//   private renderer: THREE.WebGLRenderer;
+//   private raycaster: THREE.Raycaster;
+//   private mouse: THREE.Vector2;
+//   private points: THREE.Vector3[];
+//   private handleClickBound: (event: MouseEvent) => void;
+
+//   constructor(
+//     scene: THREE.Scene,
+//     camera: THREE.Camera,
+//     renderer: THREE.WebGLRenderer
+//   ) {
+//     this.scene = scene;
+//     this.camera = camera;
+//     this.renderer = renderer;
+//     this.raycaster = new THREE.Raycaster();
+//     this.mouse = new THREE.Vector2();
+//     this.points = [];
+//     this.handleClickBound = this.handleClick.bind(this);
+//   }
+
+//   enable() {
+//     window.addEventListener("click", this.handleClickBound);
+//     console.log("🟢 Click to select points");
+//   }
+
+//   disable() {
+//     window.removeEventListener("click", this.handleClickBound);
+//     console.log("🔴 Click listener removed");
+//   }
+
+//   private handleClick(event: MouseEvent) {
+//     const rect = this.renderer.domElement.getBoundingClientRect();
+//     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+//     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+//     const mouseVector = new THREE.Vector3(this.mouse.x, this.mouse.y, 0.5);
+//     mouseVector.unproject(this.camera);
+
+//     const origin = (this.camera as THREE.PerspectiveCamera).position.clone();
+//     const direction = mouseVector.sub(origin).normalize();
+
+//     this.raycaster.set(origin, direction);
+//     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+//     if (intersects.length > 0) {
+//       const point = intersects[0].point.clone();
+//       this.points.push(point);
+//       console.log(`📍 Point ${this.points.length}:`, point);
+
+//       if (this.points.length === 2) {
+//         this.drawLine(this.points[0], this.points[1]);
+//         this.points = [];
+//       }
+//     }
+//   }
+
+//   private drawLine(p1: THREE.Vector3, p2: THREE.Vector3) {
+//     const geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+//     const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+//     const line = new THREE.Line(geometry, material);
+//     this.scene.add(line);
+//     console.log("🧵 Line drawn between two points");
+//   }
+// }

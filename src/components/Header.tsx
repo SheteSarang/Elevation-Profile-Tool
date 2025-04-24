@@ -2,14 +2,21 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { toggleDrawing } from "../store/drawingSlice";
+import { toggleAngleMode } from "../store/angleSlice";
 
 const Header: React.FC = () => {
-  const drawingEnabled = useSelector((state: RootState) => state.drawing.drawingEnabled);
   const dispatch = useDispatch();
+  const drawingEnabled = useSelector((state: RootState) => state.drawing.drawingEnabled);
+  const angleEnabled = useSelector((state: RootState) => state.Angle.angleModeEnabled);
 
-  const handleToggle = () => {
+  const handleToggleDrawing = () => {
     dispatch(toggleDrawing());
     window.dispatchEvent(new CustomEvent("line-drawing-toggle", { detail: !drawingEnabled }));
+  };
+
+  const handleToggleAngle = () => {
+    dispatch(toggleAngleMode());
+    window.dispatchEvent(new CustomEvent("angle-calculate-toggle", { detail: !angleEnabled }));
   };
 
   return (
@@ -18,12 +25,21 @@ const Header: React.FC = () => {
         <h1 className="text-2xl font-bold tracking-wide">🧱 3D Model Viewer</h1>
         <nav className="space-x-6">
           <button
-            onClick={handleToggle}
+            onClick={handleToggleDrawing}
             className={`px-4 py-2 rounded ${
               drawingEnabled ? "bg-red-600" : "bg-green-600"
             } hover:opacity-90 transition`}
           >
             {drawingEnabled ? "Disable Line Drawing" : "Enable Line Drawing"}
+          </button>
+
+          <button
+            onClick={handleToggleAngle}
+            className={`px-4 py-2 rounded ${
+              angleEnabled ? "bg-red-600" : "bg-purple-600"
+            } hover:opacity-90 transition`}
+          >
+            {angleEnabled ? "Disable Angle Mode" : "Enable Angle Mode"}
           </button>
         </nav>
       </div>

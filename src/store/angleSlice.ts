@@ -1,25 +1,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 interface AngleState {
- 
-  iselevationProfiledone: boolean; // Add this property
+  angleModeEnabled: boolean;
 }
 
 const initialState: AngleState = {
-
-  iselevationProfiledone: false, // Initial state: Elevation profile not done
+  angleModeEnabled: false,
 };
 
 const angleSlice = createSlice({
-  name: "Angle",
+  name: "angle",
   initialState,
   reducers: {
-   
-    setIselevationProfiledone: (state, action: { payload: boolean }) => {
-      state.iselevationProfiledone = action.payload; // Update elevation profile state
+    toggleAngleMode: (state) => {
+      state.angleModeEnabled = !state.angleModeEnabled;
+    },
+    setAngleMode: (state, action: { payload: boolean }) => {
+      state.angleModeEnabled = action.payload;
     },
   },
 });
 
-export const {  setIselevationProfiledone } = angleSlice.actions;
+export const { toggleAngleMode, setAngleMode } = angleSlice.actions;
 export default angleSlice.reducer;
