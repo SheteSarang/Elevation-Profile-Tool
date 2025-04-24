@@ -8,10 +8,9 @@ const App: React.FC = () => {
   // Access the Redux state
 
   return (
-    <div>
+    <div id="base-div" >
       <Header />
       <CallingFn />
-      
     </div>
   );
 };

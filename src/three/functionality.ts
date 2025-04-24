@@ -24,7 +24,12 @@ export class ThreeBase {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(this.renderer.domElement);
+    const baseDiv = document.getElementById("base-div");
+    if (baseDiv) {
+      baseDiv.appendChild(this.renderer.domElement);
+    } else {
+      console.error("Element with ID 'base-div' not found in the document.");
+    }
 
     const light = new THREE.AmbientLight(0xffffff);
     this.scene.add(light);
