@@ -369,6 +369,8 @@ export class ElevationProfile {
 
 
 
+
+
 export class AngleCalculate {
   private scene: THREE.Scene;
   private camera: THREE.Camera;
@@ -388,22 +390,24 @@ export class AngleCalculate {
     this.renderer = renderer;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
-    
     this.points = [];
-
     this.handleClickBound = this.handleClick.bind(this);
   }
 
+  /** Start listening for clicks */
   enable() {
     window.addEventListener("click", this.handleClickBound);
-    console.log("🟢 Click to select points");
+    console.log("🟢 Click to select points (2 clicks draws first line, 3rd click draws second + angle)");
   }
 
+  /** Stop listening and reset state */
   disable() {
     window.removeEventListener("click", this.handleClickBound);
-    console.log("🔴 Click listener removed");
+    console.log(" Click listener removed");
+    this.points = [];
   }
 
+  /** Handle each click on the canvas */
   private handleClick(event: MouseEvent) {
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -411,34 +415,63 @@ export class AngleCalculate {
 
     this.raycaster.setFromCamera(this.mouse, this.camera);
     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+    if (!intersects.length) return;
 
-    if (intersects.length > 0) {
-      const point = intersects[0].point.clone();
-      this.points.push(point);
-      console.log(`📍 Point ${this.points.length}:`, point);
+    const point = intersects[0].point.clone();
+    this.points.push(point);
+    console.log(` Point ${this.points.length}:`, point);
 
-      if (this.points.length === 2) {
-        this.drawLine(this.points[0], this.points[1]);
-        this.points = []; // Reset after 2 points
-      }
+    if (this.points.length === 2) {
+      // Draw first segment between point1 and point2
+      this.drawLine(this.points[0], this.points[1]);
+      console.log(" Line drawn between points 1 and 2");
+    }
+    else if (this.points.length === 3) {
+      // Draw second segment between point2 and point3
+      this.drawLine(this.points[1], this.points[2]);
+      console.log(" Line drawn between points 2 and 3");
+
+      // Calculate angle at point2
+      const angle = this.calculateAngle(this.points[0], this.points[1], this.points[2]);
+      console.log(`Angle between 2 lines: ${angle.toFixed(2)}°`);
+
+      // Reset for next measurement
+      this.points = [];
+      console.log(" Ready for next measurement");
     }
   }
 
-  private drawLine(p1: THREE.Vector3, p2: THREE.Vector3) {
-    const geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+  /** Draw a single line segment between two 3D points */
+  private drawLine(pA: THREE.Vector3, pB: THREE.Vector3) {
+    const geometry = new THREE.BufferGeometry().setFromPoints([pA, pB]);
     const material = new THREE.LineBasicMaterial({
       color: 0xff0000,
-      depthTest: false,      // <- Makes sure it’s not occluded by other objects
-      transparent: true,     // <- Optional, useful if you also want to control opacity
-      opacity: 1.0
+      depthTest: false,
+      transparent: true,
+      opacity: 1.0,
     });
-  
     const line = new THREE.Line(geometry, material);
-    line.renderOrder = 999; // <- Forces this line to render last, above other objects
-  
+    line.renderOrder = 999;
     this.scene.add(line);
-    console.log("🧵 Line drawn between two points and set to always be visible");
-  }}
+  }
+
+  /** Calculate the angle at p2 between segments p1→p2 and p3→p2 */
+  private calculateAngle(
+    p1: THREE.Vector3,
+    p2: THREE.Vector3,
+    p3: THREE.Vector3
+  ): number {
+    // Vector from p2 to p1
+    const v1 = new THREE.Vector3().subVectors(p1, p2).normalize();
+    // Vector from p2 to p3
+    const v2 = new THREE.Vector3().subVectors(p3, p2).normalize();
+    // Dot product = cos(theta) for normalized vectors
+    const dot = THREE.MathUtils.clamp(v1.dot(v2), -1, 1);
+    const angleRad = Math.acos(dot);
+    return THREE.MathUtils.radToDeg(angleRad);
+  }
+}
+
   
 
 
